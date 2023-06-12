@@ -88,6 +88,8 @@ end
 -- > run_word("test_word_title")
 -- > 12 44 91 +
 
+---@param word string
+---@return boolean
 function run_word(word)
   local formatted_word = ":::: " .. word .. " "
   local full_definition = ""
@@ -107,20 +109,38 @@ function run_word(word)
   end
 
   print("definition:" .. definition)
+
+  local input_array = {}
+  for s in string.gmatch(definition, "[^%s]+") do table.insert(input_array, s) end
+
+  -- print_r(input_array)
+
+  if EVAL(input_array, true) then
+    print("ok.")
+  else
+    print("Error processing compiled word.")
+    return false
+  end
+  return true
 end
 
 -- ------------------------------------------------------------------------------------
 -- MAIN READ/EVAL/PRINT
 -- ------------------------------------------------------------------------------------
 
--- "[^%s]+", match all non-empty string between space character.
+---@param str string
+---@return table
 function READ(str)
   local input_array = {}
+  -- "[^%s]+", match all non-empty string between space character.
   for s in string.gmatch(str, "[^%s]+") do table.insert(input_array, s) end
   return input_array
 end
 
-function EVAL(input_array)
+---@param input_array table
+---@param compiled boolean
+---@return boolean
+function EVAL(input_array, compiled)
   for i, v in ipairs(input_array) do
     if compile_flag then
       if v == "compiler" then
@@ -155,9 +175,15 @@ function EVAL(input_array)
           print("compile_words: " .. compile_words)
         elseif v == ";" then
           print("not in compile mode")
-        elseif compile_words:find(":::: " .. v) then
+        elseif (compile_words:find(":::: " .. v) and compiled) then
           print("exists in dict")
-          run_word(v)
+        elseif compile_words:find(":::: " .. v) and not compiled then
+          print("exists in dict")
+          if run_word(v) then
+            break
+          else
+            print("Error running compiled word.")
+          end
         end
       end
     end

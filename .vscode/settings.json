@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "vscode-lua-format.configPath": "./lua-formatter-config",
+  "editor.defaultFormatter": "Koihik.vscode-lua-format"
+}

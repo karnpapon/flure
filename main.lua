@@ -84,6 +84,31 @@ function end_compile()
   compile_flag = false
 end
 
+-- eg. :::: test_word_title 12 44 91 +  ;;;; :::: test_another 44 234 rrr + +  ;;;;
+-- > run_word("test_word_title")
+-- > 12 44 91 +
+
+function run_word(word)
+  local formatted_word = ":::: " .. word .. " "
+  local full_definition = ""
+  local definition = ""
+
+  local str_len = string.len(formatted_word)
+  local word_index_start = str_len
+
+  if word_index_start ~= nil then
+    full_definition = string.sub(compile_words, word_index_start + 1)
+  end
+
+  local word_index_end = string.find(full_definition, ';')
+
+  if word_index_end then
+    definition = string.sub(full_definition, 1, word_index_end - 1)
+  end
+
+  print("definition:" .. definition)
+end
+
 -- ------------------------------------------------------------------------------------
 -- MAIN READ/EVAL/PRINT
 -- ------------------------------------------------------------------------------------
@@ -132,6 +157,7 @@ function EVAL(input_array)
           print("not in compile mode")
         elseif compile_words:find(":::: " .. v) then
           print("exists in dict")
+          run_word(v)
         end
       end
     end

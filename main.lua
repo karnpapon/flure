@@ -1,10 +1,11 @@
 local readline = require("readline")
 
 -- GLOBAL
-
 int_stack = {}
 compile_flag = false
 compile_words = ""
+word_prefix = "::::"
+word_suffix = ";;;;"
 
 -- ------------------------------------------------------------------------------------
 -- UTILS
@@ -40,7 +41,7 @@ function add()
   local second_word = table.remove(int_stack, #int_stack)
   local sum = top_word + second_word
   table.insert(int_stack, sum)
-  print("add: " .. tostring(sum))
+  -- print("add: " .. tostring(sum))
 end
 
 function subtract()
@@ -48,7 +49,7 @@ function subtract()
   local second_word = table.remove(int_stack, #int_stack)
   local diff = second_word - top_word
   table.insert(int_stack, diff)
-  print("diff: " .. tostring(diff))
+  -- print("diff: " .. tostring(diff))
 end
 
 function multiply()
@@ -56,7 +57,7 @@ function multiply()
   local second_word = table.remove(int_stack, #int_stack)
   local product = top_word * second_word
   table.insert(int_stack, product)
-  print("product: " .. tostring(product))
+  -- print("product: " .. tostring(product))
 end
 
 function divide()
@@ -64,23 +65,23 @@ function divide()
   local second_word = table.remove(int_stack, #int_stack)
   local divisor = second_word / top_word
   table.insert(int_stack, divisor)
-  print("divisor: " .. tostring(divisor))
+  -- print("divisor: " .. tostring(divisor))
 end
 
 function pop()
   local top_word = table.remove(int_stack, #int_stack)
-  print("pop: " .. tostring(top_word))
+  -- print("pop: " .. tostring(top_word))
 end
 
 function start_compile()
   compile_flag = true
-  compile_words = compile_words .. "::::"
+  compile_words = compile_words .. word_prefix
 end
 
 function compile(input) compile_words = compile_words .. " " .. input end
 
 function end_compile()
-  compile_words = compile_words .. " ;;;; "
+  compile_words = compile_words .. " " .. word_suffix .. " "
   compile_flag = false
 end
 
@@ -91,7 +92,7 @@ end
 ---@param word string
 ---@return boolean
 function run_word(word)
-  local formatted_word = ":::: " .. word .. " "
+  local formatted_word = word_prefix .. " " .. word .. " "
   local full_definition = ""
   local definition = ""
 
@@ -113,12 +114,13 @@ function run_word(word)
   local input_array = {}
   for s in string.gmatch(definition, "[^%s]+") do table.insert(input_array, s) end
 
-  -- print_r(input_array)
-
-  if EVAL(input_array, true) then
+  if EVAL(input_array, true) == 1 then
     print("ok.")
-  else
+  elseif EVAL(input_array, true) == 2 then
     print("Error processing compiled word.")
+    return false
+  elseif EVAL(input_array, true) == 0 then
+    print("bye")
     return false
   end
   return true
@@ -139,7 +141,7 @@ end
 
 ---@param input_array table
 ---@param compiled boolean
----@return boolean
+---@return integer
 function EVAL(input_array, compiled)
   for i, v in ipairs(input_array) do
     if compile_flag then
@@ -148,7 +150,18 @@ function EVAL(input_array, compiled)
       elseif v == ";" then
         end_compile()
       else
-        compile(v)
+        if input_array[i - 1] == ":" then
+          if tonumber(v) ~= nil then
+            print("Error: word name cannot be an integer.")
+            compile_flag = false
+            compile_words = compile_words:sub(0, -(#word_prefix + 1))
+            return 2
+          else
+            compile(v)
+          end
+        else
+          compile(v)
+        end
       end
     else
       if tonumber(v) ~= nil then
@@ -158,7 +171,7 @@ function EVAL(input_array, compiled)
           print_r(int_stack)
         elseif v == "bye" then
           print("bye!")
-          return false
+          return 0
         elseif v == "+" then
           add()
         elseif v == "-" then
@@ -175,9 +188,9 @@ function EVAL(input_array, compiled)
           print("compile_words: " .. compile_words)
         elseif v == ";" then
           print("not in compile mode")
-        elseif (compile_words:find(":::: " .. v) and compiled) then
+        elseif (compile_words:find(word_prefix .. " " .. v) and compiled) then
           print("exists in dict")
-        elseif compile_words:find(":::: " .. v) and not compiled then
+        elseif compile_words:find(word_prefix .. " " .. v) and not compiled then
           print("exists in dict")
           if run_word(v) then
             break
@@ -188,7 +201,7 @@ function EVAL(input_array, compiled)
       end
     end
   end
-  return true
+  return 1
 end
 
 function PRINT() print_r(int_stack) end
@@ -204,6 +217,13 @@ if #arg > 0 and arg[1] == "--raw" then readline.raw = true end
 while true do
   local line = readline.readline("user>")
   if not line then break end
-  local res = rep(line)
-  if res == false then break end
+  local return_code = rep(line)
+  if return_code == 1 then
+    print("ok.")
+  elseif return_code == 0 then
+    break
+  elseif return_code == 2 then
+    print("Due to error, input was not processed.")
+  end
+
 end

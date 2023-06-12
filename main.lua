@@ -41,7 +41,7 @@ function add()
   local second_word = table.remove(int_stack, #int_stack)
   local sum = top_word + second_word
   table.insert(int_stack, sum)
-  -- print("add: " .. tostring(sum))
+  print("add: " .. tostring(sum))
 end
 
 function subtract()
@@ -49,7 +49,7 @@ function subtract()
   local second_word = table.remove(int_stack, #int_stack)
   local diff = second_word - top_word
   table.insert(int_stack, diff)
-  -- print("diff: " .. tostring(diff))
+  print("diff: " .. tostring(diff))
 end
 
 function multiply()
@@ -57,7 +57,7 @@ function multiply()
   local second_word = table.remove(int_stack, #int_stack)
   local product = top_word * second_word
   table.insert(int_stack, product)
-  -- print("product: " .. tostring(product))
+  print("product: " .. tostring(product))
 end
 
 function divide()
@@ -65,7 +65,7 @@ function divide()
   local second_word = table.remove(int_stack, #int_stack)
   local divisor = second_word / top_word
   table.insert(int_stack, divisor)
-  -- print("divisor: " .. tostring(divisor))
+  print("divisor: " .. tostring(divisor))
 end
 
 function pop()
@@ -90,7 +90,7 @@ end
 -- > 12 44 91 +
 
 ---@param word string
----@return boolean
+---@return integer
 function run_word(word)
   local formatted_word = word_prefix .. " " .. word .. " "
   local full_definition = ""
@@ -109,21 +109,25 @@ function run_word(word)
     definition = string.sub(full_definition, 1, word_index_end - 1)
   end
 
-  print("definition:" .. definition)
+  -- print("definition:" .. definition)
 
   local input_array = {}
   for s in string.gmatch(definition, "[^%s]+") do table.insert(input_array, s) end
 
-  if EVAL(input_array, true) == 1 then
-    print("ok.")
-  elseif EVAL(input_array, true) == 2 then
+  local return_code_rw = EVAL(input_array, true)
+
+  if return_code_rw == 1 then
+    return 1
+  elseif return_code_rw == 2 then
     print("Error processing compiled word.")
-    return false
-  elseif EVAL(input_array, true) == 0 then
-    print("bye")
-    return false
+    return 2
+  elseif return_code_rw == 0 then
+    print("Compiled were contains 'bye'. Ending flure.")
+    return 0
+  else
+    print("Error processing compiled word.")
+    return 2
   end
-  return true
 end
 
 -- ------------------------------------------------------------------------------------
@@ -149,6 +153,8 @@ function EVAL(input_array, compiled)
         print("compile_words: " .. compile_words)
       elseif v == ";" then
         end_compile()
+      elseif v == ":" then
+        print("Already in compile mode. Ignoring (:) operator.")
       else
         if input_array[i - 1] == ":" then
           if tonumber(v) ~= nil then
@@ -188,15 +194,25 @@ function EVAL(input_array, compiled)
           print("compile_words: " .. compile_words)
         elseif v == ";" then
           print("not in compile mode")
-        elseif (compile_words:find(word_prefix .. " " .. v) and compiled) then
+        elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+            compiled) then
           print("exists in dict")
-        elseif compile_words:find(word_prefix .. " " .. v) and not compiled then
-          print("exists in dict")
-          if run_word(v) then
-            break
+        elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+            not compiled then
+          local run_word_return_code = run_word(v)
+          if run_word_return_code == 0 then
+            return 0
+          elseif run_word_return_code == 1 then
+            return 1
+          elseif run_word_return_code == 2 then
+            print("Error running compiled word.")
+            return 2
           else
             print("Error running compiled word.")
           end
+        elseif v == "" then
+        else
+          print("no matching word in dictionaty for: " .. v)
         end
       end
     end
@@ -218,8 +234,10 @@ while true do
   local line = readline.readline("user>")
   if not line then break end
   local return_code = rep(line)
-  if return_code == 1 then
+  if return_code == 1 and compile_flag == false then
     print("ok.")
+  elseif return_code == 1 and compile_flag then
+    print("compiled.")
   elseif return_code == 0 then
     break
   elseif return_code == 2 then

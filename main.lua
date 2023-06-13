@@ -149,7 +149,6 @@ function run_word(word)
   local return_code_rw = EVAL(input_array, true)
 
   if return_code_rw == 1 then
-    -- print("return 1")
     return 1
   elseif return_code_rw == 2 then
     print("Error processing compiled word.")
@@ -227,7 +226,6 @@ function end_comment() comment_flag = false end
 function op_equal()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
-  -- print("op_equal:" .. tostring(top_word) .. " == " .. tostring(second_word))
   if top_word == second_word then
     table.insert(int_stack, -1)
   else
@@ -316,8 +314,11 @@ function op_rot()
   table.insert(int_stack, third_word)
 end
 
+-- EXAMPLE : loop 1 - dup 0 = if else loop then ;
+-- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
+
 -- non-zero = true
-function op_if_if()
+function op_if_if(str)
   local condition_bool
   local current_nest_is_readable
 
@@ -361,8 +362,6 @@ function op_if_if()
   table.insert(control_flow_stack, condition_bool)
 end
 
--- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
-
 function op_if_else()
   -- print("else")
   local current_nest_is_readable
@@ -372,7 +371,7 @@ function op_if_else()
     if x ~= nil then
       current_nest_is_readable = x
       if current_nest_is_readable then
-        if x then
+        if x == true then
           table.remove(control_flow_stack, #control_flow_stack)
           table.insert(control_flow_stack, false)
         else
@@ -381,7 +380,7 @@ function op_if_else()
         end
       else
         if #control_flow_stack > 1 then
-          local second_to_last = #control_flow_stack - 2
+          local second_to_last = #control_flow_stack - 1
           if control_flow_stack[second_to_last] == true then
             parent_nest_is_readable = true
           else
@@ -507,7 +506,7 @@ function EVAL(input_array, compiled)
           elseif v == "rot" then
             op_rot()
           elseif v == "if" then
-            op_if_if()
+            op_if_if(v)
           elseif v == "else" then
             op_if_else()
           elseif v == "then" then
@@ -580,7 +579,6 @@ function EVAL(input_array, compiled)
       end
     end
 
-    -- print("return 1: " .. tostring(v))
   end
   return 1
 end

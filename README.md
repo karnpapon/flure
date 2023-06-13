@@ -1,6 +1,6 @@
-# FORTH_LUA
+# `flure`
 
-my attempt to learn lua language by implement FORTH interpreter.
+[FORTH](https://www.forth.com/forth/)-like interpreter, written in [lua](https://www.lua.org/).
 
 ## run
 - `lua main.lua`

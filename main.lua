@@ -11,6 +11,12 @@ word_suffix = ";;;;"
 -- UTILS
 -- ------------------------------------------------------------------------------------
 
+-- plain string replace, extending Lua string standard library.
+function string:replace(substring, replacement, n)
+  return (self:gsub(substring:gsub("%p", "%%%0"),
+                    replacement:gsub("%%", "%%%%"), n))
+end
+
 -- taken from: https://stackoverflow.com/a/13398936
 function print_r(arr, indentLevel)
   local str = ""
@@ -96,20 +102,17 @@ function run_word(word)
   local full_definition = ""
   local definition = ""
 
-  local str_len = string.len(formatted_word)
-  local word_index_start = str_len
+  local start_index, end_index = string.find(compile_words, formatted_word)
 
-  if word_index_start ~= nil then
-    full_definition = string.sub(compile_words, word_index_start + 1)
+  if end_index ~= nil then
+    full_definition = string.sub(compile_words, end_index + 1)
   end
 
-  local word_index_end = string.find(full_definition, ';')
+  local full_def_start, full_def_end = string.find(full_definition, ';')
 
-  if word_index_end then
-    definition = string.sub(full_definition, 1, word_index_end - 1)
+  if full_def_end then
+    definition = string.sub(full_definition, 1, full_def_end - 1)
   end
-
-  -- print("definition:" .. definition)
 
   local input_array = {}
   for s in string.gmatch(definition, "[^%s]+") do table.insert(input_array, s) end
@@ -127,6 +130,31 @@ function run_word(word)
   else
     print("Error processing compiled word.")
     return 2
+  end
+end
+
+---@param word string
+function clear_compile_word(word)
+  local formatted_word = word_prefix .. " " .. word .. " "
+  local full_definition = ""
+  local definition = ""
+  local to_delete = ""
+
+  local start_index, end_index = string.find(compile_words, formatted_word)
+
+  if end_index ~= nil then
+    full_definition = string.sub(compile_words, end_index + 1)
+
+    local full_def_start, full_def_end = string.find(full_definition, ';')
+
+    if full_def_end then
+      definition = string.sub(full_definition, 1, full_def_end - 1)
+    end
+
+    to_delete = formatted_word .. definition .. word_suffix .. " "
+    local new_compiled_words = string.replace(compile_words, to_delete, "")
+    print("new_compiled_words:" .. new_compiled_words)
+    compile_words = new_compiled_words
   end
 end
 
@@ -163,6 +191,7 @@ function EVAL(input_array, compiled)
             compile_words = compile_words:sub(0, -(#word_prefix + 1))
             return 2
           else
+            clear_compile_word(v)
             compile(v)
           end
         else

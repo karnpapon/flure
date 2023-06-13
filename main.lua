@@ -274,7 +274,15 @@ function EVAL(input_array, compiled)
           print("not in compile mode")
         elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
             compiled) then
-          print("exists in dict")
+          -- print("exists in dict")
+          local run_word_return_code = run_word(v)
+          if run_word_return_code == 0 then
+          elseif run_word_return_code == 1 then
+          elseif run_word_return_code == 2 then
+            print("Error running compiled word.")
+          else
+            print("Error running compiled word.")
+          end
         elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
             not compiled then
           local run_word_return_code = run_word(v)

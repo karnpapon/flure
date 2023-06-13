@@ -1,15 +1,7 @@
 local readline = require("readline")
 
--- GLOBAL
-int_stack = {}
-compile_flag = false
-comment_flag = false
-compile_words = ""
-word_prefix = "::::"
-word_suffix = ";;;;"
-
 -- ------------------------------------------------------------------------------------
--- UTILS
+-- EXTENDS STANDARD LIBRARY
 -- ------------------------------------------------------------------------------------
 
 -- plain string replace, extending Lua string standard library.
@@ -26,6 +18,21 @@ function string:last_index_of(target)
     return i - 1
   end
 end
+
+-- ------------------------------------------------------------------------------------
+-- GLOBAL
+-- ------------------------------------------------------------------------------------
+
+int_stack = {}
+compile_flag = false
+comment_flag = false
+compile_words = ""
+word_prefix = "::::"
+word_suffix = ";;;;"
+
+-- ------------------------------------------------------------------------------------
+-- UTILS
+-- ------------------------------------------------------------------------------------
 
 -- taken from: https://stackoverflow.com/a/13398936
 function print_r(arr, indentLevel)
@@ -197,6 +204,106 @@ end
 function start_comment() comment_flag = true end
 
 function end_comment() comment_flag = false end
+
+-- ------------------------------------------------------------------------------------
+-- OPS
+--  0 = false
+-- -1 = true
+-- ------------------------------------------------------------------------------------
+
+function op_equal()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if top_word == second_word then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_not_equal()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if top_word ~= second_word then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_and()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if top_word == second_word then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_or()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if top_word == -1 or second_word == -1 then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_greater_than()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if second_word > top_word then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_less_than()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  if second_word < top_word then
+    table.insert(int_stack, -1)
+  else
+    table.insert(int_stack, 0)
+  end
+end
+
+function op_dup()
+  local top_word = table.remove(int_stack, #int_stack)
+  table.insert(int_stack, top_word)
+  table.insert(int_stack, top_word)
+end
+
+function op_swap()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  table.insert(int_stack, top_word)
+  table.insert(int_stack, second_word)
+end
+
+function op_two_dup()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  table.insert(int_stack, second_word)
+  table.insert(int_stack, top_word)
+  table.insert(int_stack, second_word)
+  table.insert(int_stack, top_word)
+end
+
+function op_rot()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  local third_word = table.remove(int_stack, #int_stack)
+  table.insert(int_stack, second_word)
+  table.insert(int_stack, top_word)
+  table.insert(int_stack, third_word)
+end
+
+function op_if_else() end
+
 -- ------------------------------------------------------------------------------------
 -- MAIN READ/EVAL/PRINT
 -- ------------------------------------------------------------------------------------
@@ -260,6 +367,26 @@ function EVAL(input_array, compiled)
           divide()
         elseif v == "pop" then
           pop()
+        elseif v == "=" then
+          op_equal()
+        elseif v == "<>" then
+          op_not_equal()
+        elseif v == "and" then
+          op_and()
+        elseif v == "or" then
+          op_or()
+        elseif v == ">" then
+          op_greater_than()
+        elseif v == "<" then
+          op_less_than()
+        elseif v == "dup" then
+          op_dup()
+        elseif v == "swap" then
+          op_swap()
+        elseif v == "2dup" then
+          op_two_dup()
+        elseif v == "rot" then
+          op_rot()
         elseif v == ":" then
           start_compile()
         elseif v == "immediate" then
@@ -284,11 +411,14 @@ function EVAL(input_array, compiled)
             compiled) then
           local run_word_return_code = run_word(v)
           if run_word_return_code == 0 then
+            return 0
           elseif run_word_return_code == 1 then
           elseif run_word_return_code == 2 then
             print("Error running compiled word.")
+            return 2
           else
             print("Error running compiled word.")
+            return 2
           end
         elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
             not compiled then
@@ -296,7 +426,7 @@ function EVAL(input_array, compiled)
           if run_word_return_code == 0 then
             return 0
           elseif run_word_return_code == 1 then
-            return 1
+            -- return 1
           elseif run_word_return_code == 2 then
             print("Error running compiled word.")
             return 2

@@ -24,12 +24,12 @@ end
 -- ------------------------------------------------------------------------------------
 
 int_stack = {}
+control_flow_stack = {}
 compile_flag = false
 comment_flag = false
 compile_words = ""
 word_prefix = "::::"
 word_suffix = ";;;;"
-control_flow_stack = {}
 
 -- ------------------------------------------------------------------------------------
 -- UTILS
@@ -54,7 +54,7 @@ function print_r(arr, indentLevel)
                 print_r(value, (indentLevel + 1))
     else
       -- otherwise, just print scalar type
-      str = str .. indentStr .. index .. ": " .. value .. "\n"
+      str = str .. indentStr .. index .. ": " .. tostring(value) .. "\n"
     end
   end
   return str
@@ -75,7 +75,7 @@ function add()
   local second_word = table.remove(int_stack, #int_stack)
   local sum = top_word + second_word
   table.insert(int_stack, sum)
-  print("add: " .. tostring(sum))
+  print(tostring(sum))
 end
 
 function subtract()
@@ -83,7 +83,7 @@ function subtract()
   local second_word = table.remove(int_stack, #int_stack)
   local diff = second_word - top_word
   table.insert(int_stack, diff)
-  print("diff: " .. tostring(diff))
+  print(tostring(diff))
 end
 
 function multiply()
@@ -91,7 +91,7 @@ function multiply()
   local second_word = table.remove(int_stack, #int_stack)
   local product = top_word * second_word
   table.insert(int_stack, product)
-  print("product: " .. tostring(product))
+  print(tostring(product))
 end
 
 function divide()
@@ -99,13 +99,10 @@ function divide()
   local second_word = table.remove(int_stack, #int_stack)
   local divisor = second_word / top_word
   table.insert(int_stack, divisor)
-  print("divisor: " .. tostring(divisor))
+  print(tostring(divisor))
 end
 
-function pop()
-  local top_word = table.remove(int_stack, #int_stack)
-  -- print("pop: " .. tostring(top_word))
-end
+function pop() local top_word = table.remove(int_stack, #int_stack) end
 
 -- ------------------------------------------------------------------------------------
 -- RUNNER
@@ -152,6 +149,7 @@ function run_word(word)
   local return_code_rw = EVAL(input_array, true)
 
   if return_code_rw == 1 then
+    -- print("return 1")
     return 1
   elseif return_code_rw == 2 then
     print("Error processing compiled word.")
@@ -229,6 +227,7 @@ function end_comment() comment_flag = false end
 function op_equal()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
+  -- print("op_equal:" .. tostring(top_word) .. " == " .. tostring(second_word))
   if top_word == second_word then
     table.insert(int_stack, -1)
   else
@@ -317,12 +316,14 @@ function op_rot()
   table.insert(int_stack, third_word)
 end
 
+-- non-zero = true
 function op_if_if()
-  local conditional_bool = false
-  local current_nest_is_readable = false
+  local condition_bool
+  local current_nest_is_readable
+
   if #control_flow_stack > 0 then
     local x = control_flow_stack[#control_flow_stack]
-    if x then
+    if x ~= nil then
       current_nest_is_readable = x
     else
       print("Error with control flow stack value checking on IF.")
@@ -333,38 +334,91 @@ function op_if_if()
       if #int_stack > 0 then
         local condition_value = table.remove(int_stack, #int_stack)
         if condition_value > -1 then
-          conditional_bool = false
+          condition_bool = false
         else
-          conditional_bool = true
+          condition_bool = true
         end
       else
         print("No value on integer stack. Using value of current nest.")
-        conditional_bool = current_nest_is_readable
+        condition_bool = current_nest_is_readable
       end
     else
-      conditional_bool = false
+      condition_bool = false
     end
   else
     if #int_stack > 0 then
       local condition_value = table.remove(int_stack, #int_stack)
       if condition_value > -1 then
-        conditional_bool = false
+        condition_bool = false
       else
-        conditional_bool = true
+        condition_bool = true
       end
     else
       print("No value on integer stack. Assuming -1 (TRUE).")
-      conditional_bool = true
+      condition_bool = true
     end
   end
-  table.insert(control_flow_stack, conditional_bool)
+  table.insert(control_flow_stack, condition_bool)
 end
 
-function op_if_else() end
-function op_if_then() end
+-- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
+
+function op_if_else()
+  -- print("else")
+  local current_nest_is_readable
+  local parent_nest_is_readable
+  if #control_flow_stack > 0 then
+    local x = control_flow_stack[#control_flow_stack]
+    if x ~= nil then
+      current_nest_is_readable = x
+      if current_nest_is_readable then
+        if x then
+          table.remove(control_flow_stack, #control_flow_stack)
+          table.insert(control_flow_stack, false)
+        else
+          table.remove(control_flow_stack, #control_flow_stack)
+          table.insert(control_flow_stack, true)
+        end
+      else
+        if #control_flow_stack > 1 then
+          local second_to_last = #control_flow_stack - 2
+          if control_flow_stack[second_to_last] == true then
+            parent_nest_is_readable = true
+          else
+            parent_nest_is_readable = false
+          end
+
+          if parent_nest_is_readable == true then
+            table.remove(control_flow_stack, #control_flow_stack)
+            table.insert(control_flow_stack, true)
+          else
+
+          end
+        else
+          table.remove(control_flow_stack, #control_flow_stack)
+          table.insert(control_flow_stack, true)
+        end
+      end
+    else
+      print("Error: unable to read last value on control flow stack")
+      return
+    end
+  else
+    print("Error: no value on control flow stack. ELSE should preceded by IF.")
+  end
+end
+
+function op_if_then()
+  if #control_flow_stack > 0 then
+    table.remove(control_flow_stack, #control_flow_stack)
+  else
+    print(
+        "Error: control flow stack is empty, THEN should be preceded by IF or ELSE.")
+  end
+end
 
 -- ------------------------------------------------------------------------------------
--- MAIN READ/EVAL/PRINT
+-- MAIN READ/EVAL
 -- ------------------------------------------------------------------------------------
 
 ---@param str string
@@ -384,10 +438,10 @@ function EVAL(input_array, compiled)
 
   for i, v in ipairs(input_array) do
     local x = control_flow_stack[#control_flow_stack]
-    if x then current_nest_is_readable = x end
+    if x ~= nil then current_nest_is_readable = x end
 
-    if current_nest_is_readable then
-      -- main eval here
+    if current_nest_is_readable == true then
+      -- main eval
       if compile_flag and not comment_flag then
         if v == "compiler" then
           print("compile_words: " .. compile_words)
@@ -421,7 +475,6 @@ function EVAL(input_array, compiled)
           if v == "show" then
             print_r(int_stack)
           elseif v == "bye" then
-            print("bye!")
             return 0
           elseif v == "+" then
             add()
@@ -498,7 +551,6 @@ function EVAL(input_array, compiled)
             if run_word_return_code == 0 then
               return 0
             elseif run_word_return_code == 1 then
-              -- return 1
             elseif run_word_return_code == 2 then
               print("Error running compiled word.")
               return 2
@@ -513,7 +565,7 @@ function EVAL(input_array, compiled)
         end
       end
     else
-      if not comment_flag then
+      if comment_flag == false then
         if v == "if" then
           op_if_if()
         elseif v == "else" then
@@ -528,6 +580,7 @@ function EVAL(input_array, compiled)
       end
     end
 
+    -- print("return 1: " .. tostring(v))
   end
   return 1
 end
@@ -537,7 +590,6 @@ function PRINT() print_r(int_stack) end
 local function rep(str)
   local read = READ(str)
   return EVAL(read)
-  -- PRINT()
 end
 
 if #arg > 0 and arg[1] == "--raw" then readline.raw = true end
@@ -555,5 +607,4 @@ while true do
   elseif return_code == 2 then
     print("Due to error, input was not processed.")
   end
-
 end

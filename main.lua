@@ -3,6 +3,7 @@ local readline = require("readline")
 -- GLOBAL
 int_stack = {}
 compile_flag = false
+comment_flag = false
 compile_words = ""
 word_prefix = "::::"
 word_suffix = ";;;;"
@@ -193,6 +194,9 @@ function last_compiled_word()
   return word_name_string
 end
 
+function start_comment() comment_flag = true end
+
+function end_comment() comment_flag = false end
 -- ------------------------------------------------------------------------------------
 -- MAIN READ/EVAL/PRINT
 -- ------------------------------------------------------------------------------------
@@ -211,13 +215,15 @@ end
 ---@return integer
 function EVAL(input_array, compiled)
   for i, v in ipairs(input_array) do
-    if compile_flag then
+    if compile_flag and not comment_flag then
       if v == "compiler" then
         print("compile_words: " .. compile_words)
       elseif v == ";" then
         end_compile()
       elseif v == ":" then
         print("Already in compile mode. Ignoring (:) operator.")
+      elseif v == "(" then
+        start_comment()
       else
         if input_array[i - 1] == ":" then
           if tonumber(v) ~= nil then
@@ -233,6 +239,8 @@ function EVAL(input_array, compiled)
           compile(v)
         end
       end
+    elseif compile_flag and comment_flag then
+      if v == ")" then end_comment() end
     else
       if tonumber(v) ~= nil then
         table.insert(int_stack, tonumber(v))
@@ -274,7 +282,6 @@ function EVAL(input_array, compiled)
           print("not in compile mode")
         elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
             compiled) then
-          -- print("exists in dict")
           local run_word_return_code = run_word(v)
           if run_word_return_code == 0 then
           elseif run_word_return_code == 1 then

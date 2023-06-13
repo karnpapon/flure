@@ -45,7 +45,7 @@ function print_r(arr, indentLevel)
     return
   end
 
-  for i = 0, indentLevel do indentStr = indentStr .. "\t" end
+  -- for i = 0, indentLevel do indentStr = indentStr end
 
   -- handle nested table (compound type)
   for index, value in pairs(arr) do
@@ -54,10 +54,10 @@ function print_r(arr, indentLevel)
                 print_r(value, (indentLevel + 1))
     else
       -- otherwise, just print scalar type
-      str = str .. indentStr .. index .. ": " .. tostring(value) .. "\n"
+      str = str .. tostring(value) .. (index < #arr and ", " or "")
     end
   end
-  return str
+  return "[ " .. str .. " ]"
 end
 
 function get_entry_from_end(table, entry)
@@ -593,7 +593,7 @@ end
 if #arg > 0 and arg[1] == "--raw" then readline.raw = true end
 
 while true do
-  local line = readline.readline("user>")
+  local line = readline.readline("user> ")
   if not line then break end
   local return_code = rep(line)
   if return_code == 1 and compile_flag == false then

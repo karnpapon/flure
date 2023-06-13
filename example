@@ -1,0 +1,42 @@
+<!-- basic -->
+> 10
+> ok.
+> show
+> [ 10 ]
+
+<!-- basic arithmatic -->
+> 10 20 +
+> 30
+
+<!-- comments -->
+> 10 ( 15 ) 20 ( 30 ) 40 ( 50 ) 
+> show
+> [ 10, 20, 40 ]
+
+<!-- define function -->
+> : bob 20 20 + ;
+> bob
+> ok.
+> show
+> [ 40 ]
+
+<!-- if statement -->
+> : test_if 0 if 0 if 0 else 20 then else 40 then ;
+> test_if
+> 40
+
+<!-- loop -->
+> : loop 1 - dup 0 = if else loop then ;
+> 10
+> loop
+> 9
+> 8
+> 7
+> 6
+> 5
+> 4
+> 3
+> 2
+> 1
+> 0
+> ok.

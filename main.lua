@@ -17,6 +17,15 @@ function string:replace(substring, replacement, n)
                     replacement:gsub("%%", "%%%%"), n))
 end
 
+function string:last_index_of(target)
+  local i = self:match(".*" .. target .. "()")
+  if i == nil then
+    return nil
+  else
+    return i - 1
+  end
+end
+
 -- taken from: https://stackoverflow.com/a/13398936
 function print_r(arr, indentLevel)
   local str = ""
@@ -143,6 +152,7 @@ function clear_compile_word(word)
   local start_index, end_index = string.find(compile_words, formatted_word)
 
   if end_index ~= nil then
+    print("redefined " .. word .. ".")
     full_definition = string.sub(compile_words, end_index + 1)
 
     local full_def_start, full_def_end = string.find(full_definition, ';')
@@ -153,9 +163,34 @@ function clear_compile_word(word)
 
     to_delete = formatted_word .. definition .. word_suffix .. " "
     local new_compiled_words = string.replace(compile_words, to_delete, "")
-    print("new_compiled_words:" .. new_compiled_words)
     compile_words = new_compiled_words
   end
+end
+
+-- :::: bob 20 20 + ;;;; :::: alice 1 1 + ;;;; :::: joe 4 5 + ;;;;
+function last_compiled_word()
+  local full_definition = ""
+  local definition = ""
+  local word_name_string = ""
+
+  local word_index = compile_words:last_index_of("%:")
+
+  if word_index then
+    full_definition = string.sub(compile_words, word_index)
+
+    local _, full_def_index_end = string.find(full_definition, "%: ")
+
+    if full_def_index_end then
+      definition = string.sub(full_definition, full_def_index_end + 1)
+      local definition_array = {}
+      for s in string.gmatch(definition, "[^%s]+") do
+        table.insert(definition_array, s)
+      end
+      word_name_string = definition_array[1]
+    end
+  end
+
+  return word_name_string
 end
 
 -- ------------------------------------------------------------------------------------
@@ -219,6 +254,20 @@ function EVAL(input_array, compiled)
           pop()
         elseif v == ":" then
           start_compile()
+        elseif v == "immediate" then
+          local word_to_run = last_compiled_word()
+          local run_word_return_code = run_word(word_to_run)
+          if run_word_return_code == 0 then
+            return 0
+          elseif run_word_return_code == 1 then
+            return 1
+          elseif run_word_return_code == 2 then
+            print("Error running compiled word.")
+            return 2
+          else
+            print("Error running compiled word.")
+            return 2
+          end
         elseif v == "compiler" then
           print("compile_words: " .. compile_words)
         elseif v == ";" then
@@ -238,6 +287,7 @@ function EVAL(input_array, compiled)
             return 2
           else
             print("Error running compiled word.")
+            return 2
           end
         elseif v == "" then
         else

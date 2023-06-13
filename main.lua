@@ -29,6 +29,7 @@ comment_flag = false
 compile_words = ""
 word_prefix = "::::"
 word_suffix = ";;;;"
+control_flow_stack = {}
 
 -- ------------------------------------------------------------------------------------
 -- UTILS
@@ -58,6 +59,16 @@ function print_r(arr, indentLevel)
   end
   return str
 end
+
+function get_entry_from_end(table, entry)
+  local count = (table and #table or false)
+  if (count) then return table[count - entry]; end
+  return false;
+end
+
+-- ------------------------------------------------------------------------------------
+-- BASIC ARITHIMATIC
+-- ------------------------------------------------------------------------------------
 
 function add()
   local top_word = table.remove(int_stack, #int_stack)
@@ -95,6 +106,10 @@ function pop()
   local top_word = table.remove(int_stack, #int_stack)
   -- print("pop: " .. tostring(top_word))
 end
+
+-- ------------------------------------------------------------------------------------
+-- RUNNER
+-- ------------------------------------------------------------------------------------
 
 function start_compile()
   compile_flag = true
@@ -302,7 +317,51 @@ function op_rot()
   table.insert(int_stack, third_word)
 end
 
+function op_if_if()
+  local conditional_bool = false
+  local current_nest_is_readable = false
+  if #control_flow_stack > 0 then
+    local x = control_flow_stack[#control_flow_stack]
+    if x then
+      current_nest_is_readable = x
+    else
+      print("Error with control flow stack value checking on IF.")
+      return
+    end
+
+    if current_nest_is_readable then
+      if #int_stack > 0 then
+        local condition_value = table.remove(int_stack, #int_stack)
+        if condition_value > -1 then
+          conditional_bool = false
+        else
+          conditional_bool = true
+        end
+      else
+        print("No value on integer stack. Using value of current nest.")
+        conditional_bool = current_nest_is_readable
+      end
+    else
+      conditional_bool = false
+    end
+  else
+    if #int_stack > 0 then
+      local condition_value = table.remove(int_stack, #int_stack)
+      if condition_value > -1 then
+        conditional_bool = false
+      else
+        conditional_bool = true
+      end
+    else
+      print("No value on integer stack. Assuming -1 (TRUE).")
+      conditional_bool = true
+    end
+  end
+  table.insert(control_flow_stack, conditional_bool)
+end
+
 function op_if_else() end
+function op_if_then() end
 
 -- ------------------------------------------------------------------------------------
 -- MAIN READ/EVAL/PRINT
@@ -321,125 +380,154 @@ end
 ---@param compiled boolean
 ---@return integer
 function EVAL(input_array, compiled)
+  local current_nest_is_readable = true
+
   for i, v in ipairs(input_array) do
-    if compile_flag and not comment_flag then
-      if v == "compiler" then
-        print("compile_words: " .. compile_words)
-      elseif v == ";" then
-        end_compile()
-      elseif v == ":" then
-        print("Already in compile mode. Ignoring (:) operator.")
-      elseif v == "(" then
-        start_comment()
-      else
-        if input_array[i - 1] == ":" then
-          if tonumber(v) ~= nil then
-            print("Error: word name cannot be an integer.")
-            compile_flag = false
-            compile_words = compile_words:sub(0, -(#word_prefix + 1))
-            return 2
-          else
-            clear_compile_word(v)
-            compile(v)
-          end
-        else
-          compile(v)
-        end
-      end
-    elseif compile_flag and comment_flag then
-      if v == ")" then end_comment() end
-    else
-      if tonumber(v) ~= nil then
-        table.insert(int_stack, tonumber(v))
-      else
-        if v == "show" then
-          print_r(int_stack)
-        elseif v == "bye" then
-          print("bye!")
-          return 0
-        elseif v == "+" then
-          add()
-        elseif v == "-" then
-          subtract()
-        elseif v == "*" then
-          multiply()
-        elseif v == "/" then
-          divide()
-        elseif v == "pop" then
-          pop()
-        elseif v == "=" then
-          op_equal()
-        elseif v == "<>" then
-          op_not_equal()
-        elseif v == "and" then
-          op_and()
-        elseif v == "or" then
-          op_or()
-        elseif v == ">" then
-          op_greater_than()
-        elseif v == "<" then
-          op_less_than()
-        elseif v == "dup" then
-          op_dup()
-        elseif v == "swap" then
-          op_swap()
-        elseif v == "2dup" then
-          op_two_dup()
-        elseif v == "rot" then
-          op_rot()
-        elseif v == ":" then
-          start_compile()
-        elseif v == "immediate" then
-          local word_to_run = last_compiled_word()
-          local run_word_return_code = run_word(word_to_run)
-          if run_word_return_code == 0 then
-            return 0
-          elseif run_word_return_code == 1 then
-            return 1
-          elseif run_word_return_code == 2 then
-            print("Error running compiled word.")
-            return 2
-          else
-            print("Error running compiled word.")
-            return 2
-          end
-        elseif v == "compiler" then
+    local x = control_flow_stack[#control_flow_stack]
+    if x then current_nest_is_readable = x end
+
+    if current_nest_is_readable then
+      -- main eval here
+      if compile_flag and not comment_flag then
+        if v == "compiler" then
           print("compile_words: " .. compile_words)
         elseif v == ";" then
-          print("not in compile mode")
-        elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
-            compiled) then
-          local run_word_return_code = run_word(v)
-          if run_word_return_code == 0 then
-            return 0
-          elseif run_word_return_code == 1 then
-          elseif run_word_return_code == 2 then
-            print("Error running compiled word.")
-            return 2
-          else
-            print("Error running compiled word.")
-            return 2
-          end
-        elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
-            not compiled then
-          local run_word_return_code = run_word(v)
-          if run_word_return_code == 0 then
-            return 0
-          elseif run_word_return_code == 1 then
-            -- return 1
-          elseif run_word_return_code == 2 then
-            print("Error running compiled word.")
-            return 2
-          else
-            print("Error running compiled word.")
-            return 2
-          end
-        elseif v == "" then
+          end_compile()
+        elseif v == ":" then
+          print("Already in compile mode. Ignoring (:) operator.")
+        elseif v == "(" then
+          start_comment()
         else
-          print("no matching word in dictionaty for: " .. v)
+          if input_array[i - 1] == ":" then
+            if tonumber(v) ~= nil then
+              print("Error: word name cannot be an integer.")
+              compile_flag = false
+              compile_words = compile_words:sub(0, -(#word_prefix + 1))
+              return 2
+            else
+              clear_compile_word(v)
+              compile(v)
+            end
+          else
+            compile(v)
+          end
+        end
+      elseif compile_flag and comment_flag then
+        if v == ")" then end_comment() end
+      else
+        if tonumber(v) ~= nil then
+          table.insert(int_stack, tonumber(v))
+        else
+          if v == "show" then
+            print_r(int_stack)
+          elseif v == "bye" then
+            print("bye!")
+            return 0
+          elseif v == "+" then
+            add()
+          elseif v == "-" then
+            subtract()
+          elseif v == "*" then
+            multiply()
+          elseif v == "/" then
+            divide()
+          elseif v == "pop" then
+            pop()
+          elseif v == "=" then
+            op_equal()
+          elseif v == "<>" then
+            op_not_equal()
+          elseif v == "and" then
+            op_and()
+          elseif v == "or" then
+            op_or()
+          elseif v == ">" then
+            op_greater_than()
+          elseif v == "<" then
+            op_less_than()
+          elseif v == "dup" then
+            op_dup()
+          elseif v == "swap" then
+            op_swap()
+          elseif v == "2dup" then
+            op_two_dup()
+          elseif v == "rot" then
+            op_rot()
+          elseif v == "if" then
+            op_if_if()
+          elseif v == "else" then
+            op_if_else()
+          elseif v == "then" then
+            op_if_then()
+          elseif v == ":" then
+            start_compile()
+          elseif v == "immediate" then
+            local word_to_run = last_compiled_word()
+            local run_word_return_code = run_word(word_to_run)
+            if run_word_return_code == 0 then
+              return 0
+            elseif run_word_return_code == 1 then
+              return 1
+            elseif run_word_return_code == 2 then
+              print("Error running compiled word.")
+              return 2
+            else
+              print("Error running compiled word.")
+              return 2
+            end
+          elseif v == "compiler" then
+            print("compile_words: " .. compile_words)
+          elseif v == ";" then
+            print("not in compile mode")
+          elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+              compiled) then
+            local run_word_return_code = run_word(v)
+            if run_word_return_code == 0 then
+              return 0
+            elseif run_word_return_code == 1 then
+            elseif run_word_return_code == 2 then
+              print("Error running compiled word.")
+              return 2
+            else
+              print("Error running compiled word.")
+              return 2
+            end
+          elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+              not compiled then
+            local run_word_return_code = run_word(v)
+            if run_word_return_code == 0 then
+              return 0
+            elseif run_word_return_code == 1 then
+              -- return 1
+            elseif run_word_return_code == 2 then
+              print("Error running compiled word.")
+              return 2
+            else
+              print("Error running compiled word.")
+              return 2
+            end
+          elseif v == "" then
+          else
+            print("no matching word in dictionaty for: " .. v)
+          end
+        end
+      end
+    else
+      if not comment_flag then
+        if v == "if" then
+          op_if_if()
+        elseif v == "else" then
+          op_if_else()
+        elseif v == "then" then
+          op_if_then()
+        elseif v == "bye" then
+          return 0
+        elseif v == "show" then
+          print_r(int_stack)
         end
       end
     end
+
   end
   return 1
 end

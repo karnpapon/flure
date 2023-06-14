@@ -15,6 +15,7 @@
 - show stack = `show`
 - remove top stack (last item pushed to stack) = `pop`
 - comments = `( <...any_comments_here> )`
+- `immediately` call a function = eg. `: bob 20 20 + ; immediate`, will return `40` without calling `bob` function.
 - basic ops (`-1` = `true`, `0` = `false`) [see example](./example)
   - `= (equal)`
   - `<> (not_equal)`

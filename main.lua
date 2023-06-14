@@ -318,7 +318,7 @@ end
 -- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
 
 -- non-zero = true
-function op_if_if(str)
+function op_if_if()
   local condition_bool
   local current_nest_is_readable
 
@@ -506,7 +506,7 @@ function EVAL(input_array, compiled)
           elseif v == "rot" then
             op_rot()
           elseif v == "if" then
-            op_if_if(v)
+            op_if_if()
           elseif v == "else" then
             op_if_else()
           elseif v == "then" then

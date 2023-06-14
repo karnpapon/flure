@@ -25,6 +25,11 @@
 > test_if
 > 40
 
+
+<!-- immediately call -->
+> : bob 20 20 + ; immediate
+> 40
+
 <!-- loop -->
 > : loop 1 - dup 0 = if else loop then ;
 > 10

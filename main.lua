@@ -1,6 +1,6 @@
 local L = require('linenoise')
 local inspect = require("inspect")
-local colors = require('term.colors')
+-- local colors = require('term.colors')
 local vm = require "core.vm"
 local drawer = require 'core.drawer'
 
@@ -11,6 +11,7 @@ if #arg > 0 then
     -- readline.raw = true
   elseif arg[1] == "--build" then
     build_mode = true
+    drawer.init()
     drawer.render(arg[2] or "output_img")
   end
 end

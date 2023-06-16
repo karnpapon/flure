@@ -1,17 +1,23 @@
 local inspect = require("inspect")
+local grid = require "core.grid"
+local matrix = require "libs.matrix"
 
 -- ------------------------------------------------------------------------------------
 -- GLOBAL
 -- ------------------------------------------------------------------------------------
-M = {}
-int_stack = {}
-control_flow_stack = {}
-int_stack_idx = 1
+local M = {}
+local int_stack = {}
+local control_flow_stack = {}
+local int_stack_idx = 1
 M.compile_flag = false
-comment_flag = false
-compile_words = ""
-word_prefix = "::::"
-word_suffix = ";;;;"
+local comment_flag = false
+local compile_words = ""
+local word_prefix = "::::"
+local word_suffix = ";;;;"
+
+local READ
+local EVAL
+-- local EXEC
 
 -- ------------------------------------------------------------------------------------
 -- EXTENDS STANDARD LIBRARY
@@ -36,7 +42,7 @@ end
 -- UTILS
 -- ------------------------------------------------------------------------------------
 
-function get_entry_from_end(table, entry)
+local function get_entry_from_end(table, entry)
   local count = (table and #table or false)
   if (count) then return table[count - entry]; end
   return false;
@@ -46,25 +52,21 @@ end
 -- STACK OPS
 -- ------------------------------------------------------------------------------------
 
-function push(val)
+local function push(val)
   int_stack_idx = int_stack_idx + 1
   table.insert(int_stack, val)
 end
 
-function pop()
+local function pop()
   local top_word = table.remove(int_stack, #int_stack)
   return top_word
-end
-function pop_unmut()
-  int_stack_idx = int_stack_idx - 1
-  return int_stack[int_stack_idx]
 end
 
 -- ------------------------------------------------------------------------------------
 -- BASIC ARITHIMATIC
 -- ------------------------------------------------------------------------------------
 
-function add()
+local function add()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   local sum = top_word + second_word
@@ -72,7 +74,7 @@ function add()
   -- print("add: " .. tostring(sum))
 end
 
-function subtract()
+local function subtract()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   local diff = second_word - top_word
@@ -80,7 +82,7 @@ function subtract()
   -- print("sub: " .. tostring(diff))
 end
 
-function multiply()
+local function multiply()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   local product = top_word * second_word
@@ -88,7 +90,7 @@ function multiply()
   -- print("product: " .. tostring(product))
 end
 
-function divide()
+local function divide()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   local divisor = second_word / top_word
@@ -100,16 +102,16 @@ end
 -- RUNNER
 -- ------------------------------------------------------------------------------------
 
-function start_compile()
-  compile_flag = true
+local function start_compile()
+  M.compile_flag = true
   compile_words = compile_words .. word_prefix
 end
 
-function compile(input) compile_words = compile_words .. " " .. input end
+local function compile(input) compile_words = compile_words .. " " .. input end
 
-function end_compile()
+local function end_compile()
   compile_words = compile_words .. " " .. word_suffix .. " "
-  compile_flag = false
+  M.compile_flag = false
 end
 
 -- eg. :::: test_word_title 12 44 91 +  ;;;; :::: test_another 44 234 rrr + +  ;;;;
@@ -118,18 +120,18 @@ end
 
 ---@param word string
 ---@return integer
-function run_word(word)
+local function run_word(word)
   local formatted_word = word_prefix .. " " .. word .. " "
   local full_definition = ""
   local definition = ""
 
-  local start_index, end_index = string.find(compile_words, formatted_word)
+  local _, end_index = string.find(compile_words, formatted_word)
 
   if end_index ~= nil then
     full_definition = string.sub(compile_words, end_index + 1)
   end
 
-  local full_def_start, full_def_end = string.find(full_definition, ';')
+  local _, full_def_end = string.find(full_definition, ';')
 
   if full_def_end then
     definition = string.sub(full_definition, 1, full_def_end - 1)
@@ -155,19 +157,19 @@ function run_word(word)
 end
 
 ---@param word string
-function clear_compile_word(word)
+local function clear_compile_word(word)
   local formatted_word = word_prefix .. " " .. word .. " "
   local full_definition = ""
   local definition = ""
   local to_delete = ""
 
-  local start_index, end_index = string.find(compile_words, formatted_word)
+  local _, end_index = string.find(compile_words, formatted_word)
 
   if end_index ~= nil then
     print("redefined " .. word .. ".")
     full_definition = string.sub(compile_words, end_index + 1)
 
-    local full_def_start, full_def_end = string.find(full_definition, ';')
+    local _, full_def_end = string.find(full_definition, ';')
 
     if full_def_end then
       definition = string.sub(full_definition, 1, full_def_end - 1)
@@ -180,7 +182,7 @@ function clear_compile_word(word)
 end
 
 -- :::: bob 20 20 + ;;;; :::: alice 1 1 + ;;;; :::: joe 4 5 + ;;;;
-function last_compiled_word()
+local function last_compiled_word()
   local full_definition = ""
   local definition = ""
   local word_name_string = ""
@@ -205,9 +207,9 @@ function last_compiled_word()
   return word_name_string
 end
 
-function start_comment() comment_flag = true end
+local function start_comment() comment_flag = true end
 
-function end_comment() comment_flag = false end
+local function end_comment() comment_flag = false end
 
 -- ------------------------------------------------------------------------------------
 -- OPS
@@ -217,13 +219,13 @@ function end_comment() comment_flag = false end
 
 -- num: 128 num: 129 num: 128 num: 129 num: 129 num: 130 num: 135
 
-function op_num(num)
+local function op_num(num)
   -- num = num & 0x7f;
   -- print("OPop_num--------------: " .. tostring(num))
   push(num)
 end
 
-function op_equal()
+local function op_equal()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if top_word == second_word then
@@ -233,7 +235,7 @@ function op_equal()
   end
 end
 
-function op_not_equal()
+local function op_not_equal()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if top_word ~= second_word then
@@ -243,7 +245,7 @@ function op_not_equal()
   end
 end
 
-function op_and()
+local function op_and()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if top_word == second_word then
@@ -253,7 +255,7 @@ function op_and()
   end
 end
 
-function op_or()
+local function op_or()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if top_word == -1 or second_word == -1 then
@@ -263,7 +265,7 @@ function op_or()
   end
 end
 
-function op_greater_than()
+local function op_greater_than()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if second_word > top_word then
@@ -273,7 +275,7 @@ function op_greater_than()
   end
 end
 
-function op_less_than()
+local function op_less_than()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   if second_word < top_word then
@@ -283,29 +285,29 @@ function op_less_than()
   end
 end
 
-function op_dup()
+local function op_dup()
   local top_word = table.remove(int_stack, #int_stack)
   push(top_word)
   push(top_word)
 end
 
-function op_swap()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
-  push(top_word)
-  push(second_word)
-end
-
-function op_two_dup()
+local function op_swap()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
+  push(top_word)
+  push(second_word)
+end
+
+local function op_two_dup()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
   push(second_word)
   push(top_word)
   push(second_word)
   push(top_word)
 end
 
-function op_rot()
+local function op_rot()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   local third_word = table.remove(int_stack, #int_stack)
@@ -314,7 +316,7 @@ function op_rot()
   push(third_word)
 end
 
-function op_abs()
+local function op_abs()
   local top_word = table.remove(int_stack, #int_stack)
   if not tonumber(top_word) then
     print("Error: abs should be number")
@@ -323,45 +325,45 @@ function op_abs()
   push(math.abs(top_word))
 end
 
-function op_lnot()
+local function op_lnot()
   local top_word = table.remove(int_stack, #int_stack)
   push(top_word == 0 and 0 or 1)
 end
 
-function op_mod()
+local function op_mod()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   push(top_word == 0 and 0 or second_word % top_word)
 end
 
-function op_bit_xor()
+local function op_bit_xor()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   push(second_word ~ top_word)
 end
 
-function op_bit_lshift()
+local function op_bit_lshift()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   push(second_word << top_word)
 end
 
-function op_special_x() op_num(0) end
+local function op_special_x(x, y)
+  if not x then return print("Error: no grid_x index") end
+  op_num(grid.grid["x"][x][y])
+end
 
-function op_special_y() op_num(1) end
-
-function op_special_get()
-  -- local top_word = table.remove(int_stack, #int_stack)
-  -- if (top_word < 0 or top_word >= 8) then return 1; end -- TODO
-  -- rc = op_push(vm, vm->reg[rp]);
-  -- table.insert(int_stack)
+local function op_special_y(x, y)
+  if not y then return print("Error: no grid_x index") end
+  -- matrix.print(grid.grid["y"][x][y])
+  op_num(grid.grid["y"][x][y])
 end
 
 -- EXAMPLE : loop 1 - dup 0 = if else loop then ;
 -- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
 
 -- non-zero = true
-function op_if_if()
+local function op_if_if()
   local condition_bool
   local current_nest_is_readable
 
@@ -405,7 +407,7 @@ function op_if_if()
   table.insert(control_flow_stack, condition_bool)
 end
 
-function op_if_else()
+local function op_if_else()
   -- print("else")
   local current_nest_is_readable
   local parent_nest_is_readable
@@ -433,8 +435,6 @@ function op_if_else()
           if parent_nest_is_readable == true then
             table.remove(control_flow_stack, #control_flow_stack)
             table.insert(control_flow_stack, true)
-          else
-
           end
         else
           table.remove(control_flow_stack, #control_flow_stack)
@@ -450,7 +450,7 @@ function op_if_else()
   end
 end
 
-function op_if_then()
+local function op_if_then()
   if #control_flow_stack > 0 then
     table.remove(control_flow_stack, #control_flow_stack)
   else
@@ -474,8 +474,9 @@ end
 
 ---@param input_array table
 ---@param compiled boolean
+---@param options table
 ---@return integer
-function EVAL(input_array, compiled)
+function EVAL(input_array, compiled, options)
   local current_nest_is_readable = true
 
   for i, v in ipairs(input_array) do
@@ -484,7 +485,7 @@ function EVAL(input_array, compiled)
 
     if current_nest_is_readable == true then
       -- main eval
-      if compile_flag and not comment_flag then
+      if M.compile_flag and not comment_flag then
         if v == "compiler" then
           print("compile_words: " .. compile_words)
         elseif v == ";" then
@@ -497,7 +498,7 @@ function EVAL(input_array, compiled)
           if input_array[i - 1] == ":" then
             if tonumber(v) ~= nil then
               print("Error: word name cannot be an integer.")
-              compile_flag = false
+              M.compile_flag = false
               compile_words = compile_words:sub(0, -(#word_prefix + 1))
               return 2
             else
@@ -508,7 +509,7 @@ function EVAL(input_array, compiled)
             compile(v)
           end
         end
-      elseif compile_flag and comment_flag then
+      elseif M.compile_flag and comment_flag then
         if v == ")" then end_comment() end
       else
         if tonumber(v) ~= nil then
@@ -559,11 +560,9 @@ function EVAL(input_array, compiled)
           elseif v == "<<" then
             op_bit_lshift()
           elseif v == "x" then
-            op_special_x()
-            op_special_get()
+            op_special_x(options["x"], options["y"])
           elseif v == "y" then
-            op_special_y()
-            op_special_get()
+            op_special_y(options["x"], options["y"])
           elseif v == "if" then
             op_if_if()
           elseif v == "else" then
@@ -590,7 +589,7 @@ function EVAL(input_array, compiled)
             print("compile_words: " .. compile_words)
           elseif v == ";" then
             print("not in compile mode")
-          elseif (compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+          elseif (compile_words:find(word_prefix .. " " .. v .. " ") and v ~= "" and
               compiled) then
             local run_word_return_code = run_word(v)
             if run_word_return_code == 0 then
@@ -603,7 +602,7 @@ function EVAL(input_array, compiled)
               print("Error running compiled word.")
               return 2
             end
-          elseif compile_words:find(word_prefix .. " " .. v) and v ~= "" and
+          elseif compile_words:find(word_prefix .. " " .. v .. " ") and v ~= "" and
               not compiled then
             local run_word_return_code = run_word(v)
             if run_word_return_code == 0 then
@@ -616,7 +615,7 @@ function EVAL(input_array, compiled)
               print("Error running compiled word.")
               return 2
             end
-          elseif v == "" then
+          elseif v == "" then -- print nothing if no io:input. 
           else
             print("no matching word in dictionaty for: " .. v)
           end
@@ -642,17 +641,16 @@ function EVAL(input_array, compiled)
   return 1
 end
 
-function PRINT() print(inspect.inspect(int_stack)) end
+-- local function PRINT() print(inspect.inspect(int_stack)) end
 
-function M.REPL(str)
+function M.REPL(str, options)
   local read = READ(str)
-  return EVAL(read)
+  return EVAL(read, false, options)
 end
 
-function M.exec(line)
-  local return_code = M.REPL(line)
+function M.EXEC(line, options)
+  local return_code = M.REPL(line, options)
   if return_code == 1 and M.compile_flag == false then
-    -- print("ok.")
     return pop(int_stack)
   elseif return_code == 1 and M.compile_flag then
     print("compiled.")
@@ -661,18 +659,5 @@ function M.exec(line)
     print("Due to error, input was not processed.")
   end
 end
-
--- function M.exe_draw(st)
---   local pos = 0;
---   local sz;
---   local bytes;
-
---   sz = st.sz;
---   bytes = st.bytes;
-
---   while (pos < sz) do
---     -- 
---   end
--- end
 
 return M

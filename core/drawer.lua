@@ -4,7 +4,7 @@ local grid = require "core.grid"
 -- local matrix = require "libs.matrix"
 
 local M = {}
-local sz = 128
+local sz = 128 * 2
 
 function M.init() grid.init_grid(sz) end
 
@@ -16,8 +16,13 @@ function M.render(file_name)
 
   for y = 1, sz, 1 do
     for x = 1, sz, 1 do
+
+      -- [EXAMPLE CODES]: try uncomment to see different results.
       -- local code = "x y ^ 5 % !"
-      local code = "x y + abs x y - abs 1 + ^ 2 << 5 % !"
+      -- local code = "x y + abs x y - abs 1 + ^ 2 << 5 % !"
+      -- local code = "x 2 * y % !"
+      -- local code = "x 128 - 64 * y 128 - % !"
+      local code = "x y ^ 7 % !"
       local opt = {}
       opt["x"] = x
       opt["y"] = y

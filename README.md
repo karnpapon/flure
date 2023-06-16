@@ -1,6 +1,6 @@
 # `flure`
 
-[WIP] a small stack-based language for creating procedural binary graphic (1-bit). run in [FORTH](https://www.forth.com/forth/)-like interpreter, written in [lua](https://www.lua.org/), hence the name `flure` (FORTH-like lua).
+a small stack-based language for creating procedural binary graphic (1-bit). run in [FORTH](https://www.forth.com/forth/)-like interpreter, written in [lua](https://www.lua.org/), hence the name `flure` (FORTH-like lua).
 
 ## prerequisites
 - install lua packages by `sh ./requirements_install.sh`, makesure [`luarocks`](https://luarocks.org/) is already installed. 
@@ -19,17 +19,11 @@
 
 ## usages
 - `flure` use reverse polish notation ([RPN](https://mathworld.wolfram.com/ReversePolishNotation.html)) eg `10 10 +` = `20`
-- `x` and `y` coordinates: to be documented soon...
-- support basic arithmatics `+`, `-`, `*`, `/`
-- support function declaration (or `word` in FORTH's term) `: <function_name> <...args> ;` eg. `: loop 1 - dup 0 = if else loop then ;`
-- compile mode = `:`, terminate compile mode = `;`
-- support basic control flow `<condition> if <if_case> else <else_case> then ;`
-- to exit = `bye`
-- show stack = `show`
-- remove top stack (last item pushed to stack) = `pop`
-- comments = `( <...any_comments_here> )`
-- `immediate`ly call a function = eg. `: bob 20 20 + ; immediate`, will return `40` without calling `bob` function.
-- basic ops (`-1` = `true`, `0` = `false`) [see example](./docs/example.md)
+- `x` and `y` correspond to x,y coordinates
+- [operators] arithmatics = `+`, `-`, `*`, `/`
+- [operators] bitwise = `&`, `|`, `^`, `<<`, `>>`
+- [operators] stack = `pop`, `push`
+- [operators] core = (`-1` = `true`, `0` = `false`) [see example](./docs/example.md)
   - `= (equal)`
   - `<> (not_equal)`
   - `and`
@@ -40,6 +34,14 @@
   - `swap`
   - `2dup (double duplicates)`
   - `rot (rotate)`
+- show stack = `show`
+- to exit = `bye`
+- function declaration (or `word` in `FORTH`'s term) `: <function_name> <...args> ;` eg. `: loop 1 - dup 0 = if else loop then ;`
+- compile mode = `:`, delimited compile mode = `;`
+- basic control flow `<condition> if <if_case> else <else_case> then ;`
+- comments = `( <...any_comments_here> )`
+- `immediate`ly call a function = eg. `: bob 20 20 + ; immediate`, will return `40` without calling `bob` function.
+
 
 
 ## resources

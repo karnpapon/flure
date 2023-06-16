@@ -337,16 +337,34 @@ local function op_mod()
   push(top_word == 0 and 0 or second_word % top_word)
 end
 
+local function op_bit_and()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  push(second_word & top_word)
+end
+
 local function op_bit_xor()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   push(second_word ~ top_word)
 end
 
+local function op_bit_or()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  push(second_word | top_word)
+end
+
 local function op_bit_lshift()
   local top_word = table.remove(int_stack, #int_stack)
   local second_word = table.remove(int_stack, #int_stack)
   push(second_word << top_word)
+end
+
+local function op_bit_rshift()
+  local top_word = table.remove(int_stack, #int_stack)
+  local second_word = table.remove(int_stack, #int_stack)
+  push(second_word >> top_word)
 end
 
 local function op_special_x(x, y)
@@ -556,10 +574,16 @@ function EVAL(input_array, compiled, options)
             op_lnot()
           elseif v == "%" then
             op_mod()
+          elseif v == "&" then
+            op_bit_and()
           elseif v == "^" then
             op_bit_xor()
+          elseif v == "|" then
+            op_bit_or()
           elseif v == "<<" then
             op_bit_lshift()
+          elseif v == ">>" then
+            op_bit_rshift()
           elseif v == "x" then
             op_special_x(options["x"], options["y"])
           elseif v == "y" then

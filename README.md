@@ -14,7 +14,7 @@
   - start from `x` xor `y` 
   - then modulo by `5` 
   - and convert to `1` or `0` by `!` 
-  - the process will be compute in matrix's manner
+  - the process will be computed in matrix's manner
   - <details><summary>click to show the result image ( based-on <a href="https://twitter.com/aemkei/status/1378106731386040322">Martin Kleppe's post</a>)</summary><img alt="00" src="example_img.png"></details>
 
 ## usages
@@ -29,7 +29,7 @@
 - remove top stack (last item pushed to stack) = `pop`
 - comments = `( <...any_comments_here> )`
 - `immediate`ly call a function = eg. `: bob 20 20 + ; immediate`, will return `40` without calling `bob` function.
-- basic ops (`-1` = `true`, `0` = `false`) [see example](./docs/example)
+- basic ops (`-1` = `true`, `0` = `false`) [see example](./docs/example.md)
   - `= (equal)`
   - `<> (not_equal)`
   - `and`

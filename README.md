@@ -1,6 +1,6 @@
 # `flure`
 
-[WIP] a small stack-based language for creating procedural binary graphic (1-bit). run in [FORTH](https://www.forth.com/forth/)-like interpreter, written in [lua](https://www.lua.org/).
+[WIP] a small stack-based language for creating procedural binary graphic (1-bit). run in [FORTH](https://www.forth.com/forth/)-like interpreter, written in [lua](https://www.lua.org/), hence the name `flure` (FORTH-like lua).
 
 ## prerequisites
 - install lua packages by `sh ./requirements_install.sh`, makesure [`luarocks`](https://luarocks.org/) is already installed. 

@@ -10,6 +10,7 @@ local int_stack = {}
 local control_flow_stack = {}
 local int_stack_idx = 1
 M.compile_flag = false
+M.build_mode = false
 local comment_flag = false
 local compile_words = ""
 local word_prefix = "::::"
@@ -71,7 +72,7 @@ local function add()
   local second_word = table.remove(int_stack, #int_stack)
   local sum = top_word + second_word
   push(sum)
-  -- print("add: " .. tostring(sum))
+  if not M.build_mode then print("add: " .. tostring(sum)) end
 end
 
 local function subtract()
@@ -79,7 +80,7 @@ local function subtract()
   local second_word = table.remove(int_stack, #int_stack)
   local diff = second_word - top_word
   push(diff)
-  -- print("sub: " .. tostring(diff))
+  if not M.build_mode then print("sub: " .. tostring(diff)) end
 end
 
 local function multiply()
@@ -87,7 +88,7 @@ local function multiply()
   local second_word = table.remove(int_stack, #int_stack)
   local product = top_word * second_word
   push(product)
-  -- print("product: " .. tostring(product))
+  if not M.build_mode then print("product: " .. tostring(product)) end
 end
 
 local function divide()
@@ -95,7 +96,7 @@ local function divide()
   local second_word = table.remove(int_stack, #int_stack)
   local divisor = second_word / top_word
   push(divisor)
-  -- print("divisor: " .. tostring(divisor))
+  if not M.build_mode then print("divisor: " .. tostring(divisor)) end
 end
 
 -- ------------------------------------------------------------------------------------

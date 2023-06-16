@@ -11,8 +11,11 @@ if #arg > 0 then
     -- readline.raw = true
   elseif arg[1] == "--build" then
     build_mode = true
+    vm.build_mode = build_mode
     drawer.init()
     drawer.render(arg[2] or "output_img")
+  else
+    vm.build_mode = false
   end
 end
 

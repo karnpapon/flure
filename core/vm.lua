@@ -6,7 +6,7 @@ local matrix = require "libs.matrix"
 -- GLOBAL
 -- ------------------------------------------------------------------------------------
 local M = {}
-local int_stack = {}
+local interpreter_stack = {}
 local control_flow_stack = {}
 local int_stack_idx = 1
 M.compile_flag = false
@@ -55,11 +55,11 @@ end
 
 local function push(val)
   int_stack_idx = int_stack_idx + 1
-  table.insert(int_stack, val)
+  table.insert(interpreter_stack, val)
 end
 
 local function pop()
-  local top_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
   return top_word
 end
 
@@ -68,32 +68,32 @@ end
 -- ------------------------------------------------------------------------------------
 
 local function add()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   local sum = top_word + second_word
   push(sum)
   if not M.build_mode then print("add: " .. tostring(sum)) end
 end
 
 local function subtract()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   local diff = second_word - top_word
   push(diff)
   if not M.build_mode then print("sub: " .. tostring(diff)) end
 end
 
 local function multiply()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   local product = top_word * second_word
   push(product)
   if not M.build_mode then print("product: " .. tostring(product)) end
 end
 
 local function divide()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   local divisor = second_word / top_word
   push(divisor)
   if not M.build_mode then print("divisor: " .. tostring(divisor)) end
@@ -227,8 +227,8 @@ local function op_num(num)
 end
 
 local function op_equal()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if top_word == second_word then
     push(-1)
   else
@@ -237,8 +237,8 @@ local function op_equal()
 end
 
 local function op_not_equal()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if top_word ~= second_word then
     push(-1)
   else
@@ -247,8 +247,8 @@ local function op_not_equal()
 end
 
 local function op_and()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if top_word == second_word then
     push(-1)
   else
@@ -257,8 +257,8 @@ local function op_and()
 end
 
 local function op_or()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if top_word == -1 or second_word == -1 then
     push(-1)
   else
@@ -267,8 +267,8 @@ local function op_or()
 end
 
 local function op_greater_than()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if second_word > top_word then
     push(-1)
   else
@@ -277,8 +277,8 @@ local function op_greater_than()
 end
 
 local function op_less_than()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   if second_word < top_word then
     push(-1)
   else
@@ -287,21 +287,21 @@ local function op_less_than()
 end
 
 local function op_dup()
-  local top_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
   push(top_word)
   push(top_word)
 end
 
 local function op_swap()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(top_word)
   push(second_word)
 end
 
 local function op_two_dup()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word)
   push(top_word)
   push(second_word)
@@ -309,16 +309,16 @@ local function op_two_dup()
 end
 
 local function op_rot()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
-  local third_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
+  local third_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word)
   push(top_word)
   push(third_word)
 end
 
 local function op_abs()
-  local top_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
   if not tonumber(top_word) then
     print("Error: abs should be number")
     return
@@ -327,43 +327,43 @@ local function op_abs()
 end
 
 local function op_lnot()
-  local top_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
   push(top_word == 0 and 0 or 1)
 end
 
 local function op_mod()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(top_word == 0 and 0 or second_word % top_word)
 end
 
 local function op_bit_and()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word & top_word)
 end
 
 local function op_bit_xor()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word ~ top_word)
 end
 
 local function op_bit_or()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word | top_word)
 end
 
 local function op_bit_lshift()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word << top_word)
 end
 
 local function op_bit_rshift()
-  local top_word = table.remove(int_stack, #int_stack)
-  local second_word = table.remove(int_stack, #int_stack)
+  local top_word = table.remove(interpreter_stack, #interpreter_stack)
+  local second_word = table.remove(interpreter_stack, #interpreter_stack)
   push(second_word >> top_word)
 end
 
@@ -396,8 +396,9 @@ local function op_if_if()
     end
 
     if current_nest_is_readable then
-      if #int_stack > 0 then
-        local condition_value = table.remove(int_stack, #int_stack)
+      if #interpreter_stack > 0 then
+        local condition_value = table.remove(interpreter_stack,
+                                             #interpreter_stack)
         if condition_value > -1 then
           condition_bool = false
         else
@@ -411,8 +412,9 @@ local function op_if_if()
       condition_bool = false
     end
   else
-    if #int_stack > 0 then
-      local condition_value = table.remove(int_stack, #int_stack)
+    if #interpreter_stack > 0 then
+      local condition_value =
+          table.remove(interpreter_stack, #interpreter_stack)
       if condition_value > -1 then
         condition_bool = false
       else
@@ -535,7 +537,7 @@ function EVAL(input_array, compiled, options)
           op_num(tonumber(v))
         else
           if v == "show" then
-            print(inspect.inspect(int_stack))
+            print(inspect.inspect(interpreter_stack))
           elseif v == "bye" then
             return 0
           elseif v == "+" then
@@ -657,7 +659,7 @@ function EVAL(input_array, compiled, options)
         elseif v == "bye" then
           return 0
         elseif v == "show" then
-          print(inspect.inspect(int_stack))
+          print(inspect.inspect(interpreter_stack))
         end
       end
     end
@@ -666,7 +668,7 @@ function EVAL(input_array, compiled, options)
   return 1
 end
 
--- local function PRINT() print(inspect.inspect(int_stack)) end
+-- local function PRINT() print(inspect.inspect(interpreter_stack)) end
 
 function M.REPL(str, options)
   local read = READ(str)
@@ -676,7 +678,7 @@ end
 function M.EXEC(line, options)
   local return_code = M.REPL(line, options)
   if return_code == 1 and M.compile_flag == false then
-    return pop(int_stack)
+    return pop(interpreter_stack)
   elseif return_code == 1 and M.compile_flag then
     print("compiled.")
   elseif return_code == 0 then

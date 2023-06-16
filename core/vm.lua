@@ -1,3 +1,5 @@
+local inspect = require("inspect")
+
 -- ------------------------------------------------------------------------------------
 -- GLOBAL
 -- ------------------------------------------------------------------------------------
@@ -33,31 +35,6 @@ end
 -- ------------------------------------------------------------------------------------
 -- UTILS
 -- ------------------------------------------------------------------------------------
-
--- taken from: https://stackoverflow.com/a/13398936
-function print_r(arr, indentLevel)
-  local str = ""
-  local indentStr = "#"
-
-  if (indentLevel == nil) then
-    print(print_r(arr, 0))
-    return
-  end
-
-  -- for i = 0, indentLevel do indentStr = indentStr end
-
-  -- handle nested table (compound type)
-  for index, value in pairs(arr) do
-    if type(value) == "table" then
-      str = str .. indentStr .. index .. ": \n" ..
-                print_r(value, (indentLevel + 1))
-    else
-      -- otherwise, just print scalar type
-      str = str .. tostring(value) .. (index < #arr and ", " or "")
-    end
-  end
-  return "[ " .. str .. " ]"
-end
 
 function get_entry_from_end(table, entry)
   local count = (table and #table or false)
@@ -538,7 +515,7 @@ function EVAL(input_array, compiled)
           op_num(tonumber(v))
         else
           if v == "show" then
-            print_r(int_stack)
+            print(inspect.inspect(int_stack))
           elseif v == "bye" then
             return 0
           elseif v == "+" then
@@ -656,7 +633,7 @@ function EVAL(input_array, compiled)
         elseif v == "bye" then
           return 0
         elseif v == "show" then
-          print_r(int_stack)
+          print(inspect.inspect(int_stack))
         end
       end
     end
@@ -665,7 +642,7 @@ function EVAL(input_array, compiled)
   return 1
 end
 
-function PRINT() print_r(int_stack) end
+function PRINT() print(inspect.inspect(int_stack)) end
 
 function M.REPL(str)
   local read = READ(str)

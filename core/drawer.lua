@@ -1,32 +1,10 @@
-local interpreter = require "vm"
-local matrix = require "matrix"
+local inspect = require("inspect")
+local interpreter = require "core.vm"
+local matrix = require "libs.matrix"
 
 local M = {}
-
 local drawer_vm = {}
 local drawer_state = {}
-
-function print_r(arr, indentLevel)
-  local str = ""
-  local indentStr = "#"
-
-  if (indentLevel == nil) then
-    print(print_r(arr, 0))
-    return
-  end
-
-  -- handle nested table (compound type)
-  for index, value in pairs(arr) do
-    if type(value) == "table" then
-      str = str .. indentStr .. index .. ": \n" ..
-                print_r(value, (indentLevel + 1))
-    else
-      -- otherwise, just print scalar type
-      str = str .. tostring(value) .. (index < #arr and ", " or "")
-    end
-  end
-  return "[ " .. str .. " ]"
-end
 
 function M.init_vm() drawer_vm = {stk = {}, reg = {}, stkpos = -1, err = 0} end
 
@@ -37,13 +15,13 @@ end
 
 function regset(i, val) drawer_vm.reg[i] = val end
 
-function M.render()
+function M.render(file_name)
   local sz = 128 * 2
 
   M.init_vm()
   M.init_state(sz)
 
-  local file = io.open("binary_pixel_example.pbm", "w")
+  local file = io.open(tostring(file_name) .. ".pbm", "w")
 
   file:write(
       "P1\n# test image\n" .. drawer_state.sz .. " " .. drawer_state.sz .. "\n")
@@ -57,14 +35,14 @@ function M.render()
       mat_x[x][y] = x
 
       -- "x y + abs x y - abs 1 + ^ 2 << 7 % !"
-      local code =
-          tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) .. " " ..
-              "+ abs " .. tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) ..
-              " " .. "- abs 2 + ^ 2 << 5 % !"
-
       -- local code =
-      --     tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) .. " " .. "^" ..
-      --         " " .. "5 % !"
+      --     tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) .. " " ..
+      --         "+ abs " .. tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) ..
+      --         " " .. "- abs 2 + ^ 2 << 5 % !"
+
+      local code =
+          tostring(mat_x[x][y]) .. " " .. tostring(mat_y[x][y]) .. " " .. "^" ..
+              " " .. "5 % !"
 
       local val = interpreter.exec(code)
       file:write(val)

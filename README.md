@@ -13,7 +13,8 @@
 - `x y ^ 5 % !` will compute an image as [`.pbm`](https://oceancolor.gsfc.nasa.gov/staff/norman/seawifs_image_cookbook/faux_shuttle/pbm.html) file. the procedurals are
   - start from `x` xor `y` 
   - then modulo by `5` 
-  - and convert to `1` or `0` by `!` (in matrix's manner)
+  - and convert to `1` or `0` by `!` 
+  - the process will be compute in matrix's manner
   - <details><summary>click to show the result image ( based-on <a href="https://twitter.com/aemkei/status/1378106731386040322">Martin Kleppe's post</a>)</summary><img alt="00" src="example_img.png"></details>
 
 ## usages

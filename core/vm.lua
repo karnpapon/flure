@@ -1,6 +1,6 @@
 local inspect = require("inspect")
 local grid = require "core.grid"
-local matrix = require "libs.matrix"
+-- local matrix = require "libs.matrix"
 
 -- ------------------------------------------------------------------------------------
 -- GLOBAL
@@ -8,7 +8,6 @@ local matrix = require "libs.matrix"
 local M = {}
 local interpreter_stack = {}
 local control_flow_stack = {}
-local int_stack_idx = 1
 M.compile_flag = false
 M.build_mode = false
 local comment_flag = false
@@ -53,10 +52,7 @@ end
 -- STACK OPS
 -- ------------------------------------------------------------------------------------
 
-local function push(val)
-  int_stack_idx = int_stack_idx + 1
-  table.insert(interpreter_stack, val)
-end
+local function push(val) table.insert(interpreter_stack, val) end
 
 local function pop()
   local top_word = table.remove(interpreter_stack, #interpreter_stack)
@@ -160,15 +156,13 @@ end
 ---@param word string
 local function clear_compile_word(word)
   local formatted_word = word_prefix .. " " .. word .. " "
-  local full_definition = ""
   local definition = ""
-  local to_delete = ""
 
   local _, end_index = string.find(compile_words, formatted_word)
 
   if end_index ~= nil then
     print("redefined " .. word .. ".")
-    full_definition = string.sub(compile_words, end_index + 1)
+    local full_definition = string.sub(compile_words, end_index + 1)
 
     local _, full_def_end = string.find(full_definition, ';')
 
@@ -176,27 +170,24 @@ local function clear_compile_word(word)
       definition = string.sub(full_definition, 1, full_def_end - 1)
     end
 
-    to_delete = formatted_word .. definition .. word_suffix .. " "
+    local to_delete = formatted_word .. definition .. word_suffix .. " "
     local new_compiled_words = string.replace(compile_words, to_delete, "")
     compile_words = new_compiled_words
   end
 end
 
--- :::: bob 20 20 + ;;;; :::: alice 1 1 + ;;;; :::: joe 4 5 + ;;;;
 local function last_compiled_word()
-  local full_definition = ""
-  local definition = ""
   local word_name_string = ""
 
   local word_index = compile_words:last_index_of("%:")
 
   if word_index then
-    full_definition = string.sub(compile_words, word_index)
+    local full_definition = string.sub(compile_words, word_index)
 
     local _, full_def_index_end = string.find(full_definition, "%: ")
 
     if full_def_index_end then
-      definition = string.sub(full_definition, full_def_index_end + 1)
+      local definition = string.sub(full_definition, full_def_index_end + 1)
       local definition_array = {}
       for s in string.gmatch(definition, "[^%s]+") do
         table.insert(definition_array, s)
@@ -218,13 +209,7 @@ local function end_comment() comment_flag = false end
 -- -1 = true
 -- ------------------------------------------------------------------------------------
 
--- num: 128 num: 129 num: 128 num: 129 num: 129 num: 130 num: 135
-
-local function op_num(num)
-  -- num = num & 0x7f;
-  -- print("OPop_num--------------: " .. tostring(num))
-  push(num)
-end
+local function op_num(num) push(num) end
 
 local function op_equal()
   local top_word = table.remove(interpreter_stack, #interpreter_stack)
@@ -368,18 +353,14 @@ local function op_bit_rshift()
 end
 
 local function op_special_x(x, y)
-  if not x then return print("Error: no grid_x index") end
+  if not x and not y then return print("Error: no grid index") end
   op_num(grid.grid["x"][x][y])
 end
 
 local function op_special_y(x, y)
-  if not y then return print("Error: no grid_x index") end
-  -- matrix.print(grid.grid["y"][x][y])
+  if not y and not x then return print("Error: no grid index") end
   op_num(grid.grid["y"][x][y])
 end
-
--- EXAMPLE : loop 1 - dup 0 = if else loop then ;
--- EXAMPLE : bob 0 if 0 if 10 else 30 then else 40 then ;
 
 -- non-zero = true
 local function op_if_if()

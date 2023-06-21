@@ -17,6 +17,8 @@ function M.init_grid(sz)
 
   M.grid["x"] = mat_x
   M.grid["y"] = mat_y
+  M.grid["w"] = sz
+  M.grid["h"] = sz
 end
 
 return M

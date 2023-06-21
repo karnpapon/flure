@@ -4,7 +4,7 @@ local grid = require "core.grid"
 -- local matrix = require "libs.matrix"
 
 local M = {}
-local sz = 128 * 2
+local sz = 128
 
 function M.init() grid.init_grid(sz) end
 
@@ -15,7 +15,8 @@ function M.render(file_name)
 
   local file = io.open(tostring(file_name) .. ".pbm", "w")
 
-  file:write("P1\n# " .. file_name .. "\n" .. w .. " " .. h .. "\n")
+  file:write("P1\n# " .. file_name .. "\n" .. math.floor(w) .. " " ..
+                 math.floor(h) .. "\n")
 
   for y = 1, w, 1 do
     for x = 1, h, 1 do
@@ -31,7 +32,7 @@ function M.render(file_name)
       opt["y"] = y
 
       local val = interpreter.EXEC(code, opt)
-      file:write(val .. " ")
+      file:write(val .. (x == sz and "" or " "))
       file:write(x == sz and "\n" or "")
     end
   end

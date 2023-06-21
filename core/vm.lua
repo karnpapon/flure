@@ -362,6 +362,10 @@ local function op_special_y(x, y)
   op_num(grid.grid["y"][x][y])
 end
 
+local function op_special_w() op_num(grid.grid["w"]) end
+
+local function op_special_h() op_num(grid.grid["w"]) end
+
 -- non-zero = true
 local function op_if_if()
   local condition_bool
@@ -568,9 +572,15 @@ function EVAL(input_array, compiled, options)
           elseif v == ">>" then
             op_bit_rshift()
           elseif v == "x" then
+            if not options then return end
             op_special_x(options["x"], options["y"])
           elseif v == "y" then
+            if not options then return end
             op_special_y(options["x"], options["y"])
+          elseif v == "w" then
+            op_special_w()
+          elseif v == "h" then
+            op_special_h()
           elseif v == "if" then
             op_if_if()
           elseif v == "else" then

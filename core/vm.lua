@@ -14,6 +14,11 @@ local comment_flag = false
 local compile_words = ""
 local word_prefix = "::::"
 local word_suffix = ";;;;"
+local return_code = {}
+
+return_code["EXIT"] = 0
+return_code["OK"] = 1
+return_code["ERROR"] = 2
 
 local READ
 local EVAL
@@ -140,16 +145,16 @@ local function run_word(word)
   local return_code_rw = EVAL(input_array, true)
 
   if return_code_rw == 1 then
-    return 1
+    return return_code["OK"]
   elseif return_code_rw == 2 then
     print("Error processing compiled word.")
-    return 2
+    return return_code["ERROR"]
   elseif return_code_rw == 0 then
     print("Compiled were contains 'bye'. Ending flure.")
-    return 0
+    return return_code["EXIT"]
   else
     print("Error processing compiled word.")
-    return 2
+    return return_code["ERROR"]
   end
 end
 
@@ -593,15 +598,15 @@ function EVAL(input_array, compiled, options)
             local word_to_run = last_compiled_word()
             local run_word_return_code = run_word(word_to_run)
             if run_word_return_code == 0 then
-              return 0
+              return return_code["EXIT"]
             elseif run_word_return_code == 1 then
-              return 1
+              return return_code["OK"]
             elseif run_word_return_code == 2 then
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             else
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             end
           elseif v == "compiler" then
             print("compile_words: " .. compile_words)
@@ -611,14 +616,14 @@ function EVAL(input_array, compiled, options)
               compiled) then
             local run_word_return_code = run_word(v)
             if run_word_return_code == 0 then
-              return 0
+              return return_code["EXIT"]
             elseif run_word_return_code == 1 then
             elseif run_word_return_code == 2 then
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             else
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             end
           elseif compile_words:find(word_prefix .. " " .. v .. " ") and v ~= "" and
               not compiled then
@@ -628,10 +633,10 @@ function EVAL(input_array, compiled, options)
             elseif run_word_return_code == 1 then
             elseif run_word_return_code == 2 then
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             else
               print("Error running compiled word.")
-              return 2
+              return return_code["ERROR"]
             end
           elseif v == "" then -- print nothing if no io:input. 
           else
@@ -648,7 +653,7 @@ function EVAL(input_array, compiled, options)
         elseif v == "then" then
           op_if_then()
         elseif v == "bye" then
-          return 0
+          return return_code["EXIT"]
         elseif v == "show" then
           print(inspect.inspect(interpreter_stack))
         end
@@ -656,10 +661,12 @@ function EVAL(input_array, compiled, options)
     end
 
   end
-  return 1
+  return return_code["OK"]
 end
 
 -- local function PRINT() print(inspect.inspect(interpreter_stack)) end
+
+function M.top_interp_stack() return interpreter_stack[#interpreter_stack] end
 
 function M.REPL(str, options)
   local read = READ(str)
@@ -667,13 +674,13 @@ function M.REPL(str, options)
 end
 
 function M.EXEC(line, options)
-  local return_code = M.REPL(line, options)
-  if return_code == 1 and M.compile_flag == false then
+  local _return_code = M.REPL(line, options)
+  if _return_code == 1 and M.compile_flag == false then
     return pop(interpreter_stack)
-  elseif return_code == 1 and M.compile_flag then
+  elseif _return_code == 1 and M.compile_flag then
     print("compiled.")
-  elseif return_code == 0 then
-  elseif return_code == 2 then
+  elseif _return_code == 0 then
+  elseif _return_code == 2 then
     print("Due to error, input was not processed.")
   end
 end
